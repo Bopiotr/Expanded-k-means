@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "outDir": "dist",
+//    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+//    "experimentalDecorators": true,
+//    "emitDecoratorMetadata": true,
+    "baseUrl": "."
+  }
+}
