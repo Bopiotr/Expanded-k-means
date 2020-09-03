@@ -1,4 +1,4 @@
-import {IInstance, Instances} from "../Instance";
+import {IInstance, IImportedData} from "../Types";
 import {Transform} from "stream";
 
 const fs = require('fs');
@@ -11,9 +11,9 @@ export function csvReader(path: string, readHeaders: (headers: string[]) => void
         .on('data', readData);
 }
 
-export async function readCsvData(path: string): Promise<Instances> {
+export async function readCsvData(path: string): Promise<IImportedData> {
     return new Promise(((resolve, reject) => {
-        const instances: Instances = new Instances();
+        const instances: IImportedData = {attributes: [], instances: []} as IImportedData;
         const readHeaders = (headers: string[]) => {
             instances.attributes = headers;
         };

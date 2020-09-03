@@ -1,6 +1,6 @@
-import {IInstance} from '../Instance';
+import {IInstance} from '../Types';
 
-export type DistanceFunctionType = (x: IInstance, y: IInstance, attributes: string[]) => number;
+export type DistanceFunctionType = (x: IInstance, y: IInstance, attributes?: string[]) => number;
 
 export const euclideanDistance: DistanceFunctionType = (x: IInstance, y: IInstance, attributes: string[]): number => {
     if (!attributes || !attributes.length) {

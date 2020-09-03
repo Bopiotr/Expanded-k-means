@@ -1,5 +1,7 @@
 import {readCsvData} from "./dataReaders/csvReader";
-import {Algorithm, DistancesTypes, IOptions, RandomStyleTypes} from "./algorithm/algorithm";
+import {Algorithm} from "./algorithm/algorithm";
+import {DistancesTypes, IOptions, RandomStyleTypes} from "./Types";
+
 
 async function main() {
     const algorithm: Algorithm = new Algorithm(await readCsvData('./res/kantor.csv'));
