@@ -1,6 +1,7 @@
 import {readCsvData} from "./dataReaders/csvReader";
 import {Algorithm} from "./algorithm/algorithm";
-import {DistancesTypes, IOptions, RandomStyleTypes} from "./Types";
+import {IOptions} from "./Types";
+import {euclideanDistance} from "./distanes/distancesFunctions";
 
 
 async function main() {
@@ -8,8 +9,7 @@ async function main() {
     algorithm.options = {
         numClusters: 5,
         prioritization: false,
-        distanceFunction: DistancesTypes.EuclideanDistance,
-        randomStyle: RandomStyleTypes.randomBetween
+        distanceFunction: euclideanDistance
     } as IOptions;
     algorithm.buildClusters();
 }

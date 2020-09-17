@@ -1,12 +1,11 @@
-import {IInstance, IImportedData, ICluster, IOptions, RandomStyleTypes, DistancesTypes} from "../Types";
-import {Random} from "random-js";
-import {DistanceFunctionType, euclideanDistance, manhattanDistance} from "../distanes/distancesFunctions";
+import {IInstance, IImportedData, ICluster, IOptions} from '../Types';
+import {Random} from 'random-js';
+import {euclideanDistance} from '../distanes/distancesFunctions';
 
 export class Algorithm {
     private static defaultOptions: IOptions = {
         numClusters: 4,
-        randomStyle: RandomStyleTypes.randomBetween,
-        distanceFunction: DistancesTypes.EuclideanDistance,
+        distanceFunction: euclideanDistance,
         prioritization: false
     } as IOptions;
 
@@ -21,45 +20,30 @@ export class Algorithm {
         this.options = options || Algorithm.defaultOptions;
     }
 
-    private distanceFunction: DistanceFunctionType;
-
-    public buildClusters(customDistance?: DistanceFunctionType): void {
-        this.prepareClusters(customDistance);
-
-    }
-
-    public moveCentroids()
-
-    private prepareClusters(customDistance?: DistanceFunctionType): void {
-        switch (this.options.randomStyle) {
-            case RandomStyleTypes.fullyRandom:
-                this.fullyRandomCentroids();
-                break;
-            case RandomStyleTypes.randomBetween:
-                this.randomCentroids();
-                break;
-            default:
-                throw new Error('Random Options is not defined');
-        }
-        switch (this.options.distanceFunction) {
-            case DistancesTypes.EuclideanDistance:
-                this.distanceFunction = euclideanDistance;
-                break;
-            case DistancesTypes.ManhattanDistance:
-                this.distanceFunction = manhattanDistance;
-                break;
-            case DistancesTypes.Custom:
-                if (!customDistance) {
-                    console.warn('[Warning] Custom distance function not provided, but in option is custom type declared. Instead, a Euclidean function will be used');
-                    this.distanceFunction = euclideanDistance;
-                } else {
-                    this.distanceFunction = customDistance;
-                }
-                break;
-            default:
-                throw new Error('Distance Function is not defined');
-        }
-        this.assignObjectsToClusters();
+    public buildClusters(): void {
+        this.randomCentroids();
+        let continueIterations = false;
+        let iterator = 0;
+        do {
+            this.assignObjectsToClusters();
+            continueIterations = false;
+            ++iterator;
+            this.clusters.forEach((value: ICluster, index: number) => {
+                let newMid: IInstance = {};
+                this.attributes.forEach(attr => {
+                    const sum = value.objects.map(item => !(typeof item[attr] === 'string') ? item[attr] : +item[attr])
+                        .reduce((total, aNumber) => total + aNumber, 0);
+                    newMid[attr] = sum / value.objects.length;
+                    if (!this.options.iterationLimit || iterator < this.options.iterationLimit) {
+                        continueIterations = newMid[attr] !== value.centroid[attr];
+                    }
+                })
+                this.clusters[index] = {
+                    ...value,
+                    centroid: !value.objects.length ? this.clusters[index].centroid : newMid
+                } as ICluster;
+            });
+        } while (continueIterations);
     }
 
     private randomCentroids(): void {
@@ -82,49 +66,32 @@ export class Algorithm {
         }
     }
 
-    private fullyRandomCentroids(): void {
-        this.clusters = [];
-        const random: Random = new Random();
-        for (let i = 0; i < this.options.numClusters; ++i) {
-            const centroid: IInstance = {};
-            this.attributes.forEach((attr: string) => {
-                centroid[attr] = random.int32();
-            });
-            this.clusters.push({centroid: centroid, objects: []} as ICluster);
-        }
-    }
-
-    private assignObjectsToClusters() {
-        if (!this.distanceFunction) {
+    private assignObjectsToClusters(): void {
+        if (!this.options.distanceFunction) {
             throw new Error('Distance function is undefined');
         }
-        for (let i = 0; i < this.instances.length; ++i) {
+        const newClusters: ICluster[] = this.clusters.map(value => ({
+            centroid: value.centroid,
+            objects: []
+        } as ICluster));
+
+        this.instances.forEach((currentInstance: IInstance) => {
             let nearestCent: { centroidIndex: number, distance: number } = {
                 centroidIndex: 0,
-                distance: this.distanceFunction(this.instances[i], this.clusters[0].centroid, this.attributes)
+                distance: this.options.distanceFunction(currentInstance, this.clusters[0].centroid, this.attributes)
             };
-            for (let j = 1; j < this.clusters.length; ++j) {
-                const distance: number = this.distanceFunction(this.instances[i], this.clusters[j].centroid, this.attributes);
+            this.clusters.forEach((currentCluster: ICluster, clusterIndex: number) => {
+                const distance: number = this.options.distanceFunction(currentInstance, currentCluster.centroid, this.attributes);
                 if (distance < nearestCent.distance) {
                     nearestCent = {
-                        centroidIndex: j,
+                        centroidIndex: clusterIndex,
                         distance: distance
                     };
                 }
-            }
-            this.clusters[nearestCent.centroidIndex].objects.push(this.instances[i]);
-        }
-    }
-
-    /*
-    * return index of minimum value in array
-    * */
-    private minimum(array: number[]): number {
-        let min = array[0];
-        for (let i = 1; i < array.length; ++i) {
-            min = min > array[i] ? array[i] : min;
-        }
-        return array.indexOf(min);
+            });
+            newClusters[nearestCent.centroidIndex].objects.push(currentInstance);
+        });
+        this.clusters = [...newClusters];
     }
 }
 
