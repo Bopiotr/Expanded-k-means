@@ -20,7 +20,7 @@ export async function readCsvData(path: string): Promise<IImportedData> {
         const readData = (data: any) => {
             const instance: IInstance = {};
             instances.attributes.forEach((attr: string) => {
-                instance[attr] = data[attr];
+                instance[attr] = typeof data[attr] === 'string' ? +data[attr] : data[attr];
             });
             instances.instances.push(instance);
         };

@@ -17,6 +17,12 @@ export interface ICluster {
 export interface IOptions {
     distanceFunction: DistanceFunctionType;
     numClusters: number;
-    prioritization: boolean;
+    standardScore: [number, number] | false;
     iterationLimit?: number;
+    reRandomCentroidAfterIterations?: number;
+}
+
+export interface IAnalitycsObjects {
+    minValues: IInstance,
+    maxValues: IInstance
 }
