@@ -6,7 +6,7 @@ export class Algorithm {
     private static defaultOptions: IOptions = {
         numClusters: 4,
         distanceFunction: euclideanDistance,
-        standardScore: false
+        includeOutlier: false
     } as IOptions;
 
     public attributes: string[];
@@ -19,8 +19,12 @@ export class Algorithm {
     constructor(data: IImportedData, options?: IOptions) {
         this.attributes = data.attributes;
         this.options = options || Algorithm.defaultOptions;
-        const filteredData = data.instances.filter(item => !this.hasUndefined(item));
-        this.analityc = {...this.countMinAndMaxValues(filteredData)};
+        let filteredData = data.instances.filter(item => !this.hasUndefined(item));
+        if (!this.options.includeOutlier) {
+            this.analityc = {...this.analityc, quartiles: this.countQuartile(filteredData)}
+            filteredData = [...this.filterOutlier(filteredData)];
+        }
+        this.analityc = {...this.analityc, ...this.countMinAndMaxValues(filteredData)};
         if (!this.options.standardScore) {
             this.instances = filteredData;
         } else {
@@ -33,6 +37,7 @@ export class Algorithm {
         this.randomCentroids();
         let continueIterations = false;
         let iterator = 0;
+        console.group('Iterations Counting:');
         do {
             if (this.options.reRandomCentroidAfterIterations && (iterator % this.options.reRandomCentroidAfterIterations === 0)) {
                 this.randomCentroids();
@@ -55,9 +60,10 @@ export class Algorithm {
                     centroid: !value.objects.length ? this.clusters[index].centroid : newMid
                 } as ICluster;
             });
-            console.clear();
-            console.log('Iteration counter: ', iterator);
+            console.clear()
+            console.count('Iteration counter: ');
         } while (continueIterations);
+        console.groupEnd();
     }
 
     private countMinAndMaxValues(instances: IInstance[]): IAnalitycsObjects {
@@ -123,20 +129,20 @@ export class Algorithm {
     }
 
     private normalizeInstances(instances: IInstance[]): IInstance[] {
-        if (!instances || !instances.length) {
+        if (!this.options.standardScore) {
+            throw Error('Standard Score not provided');
+        } else if (!instances || !instances.length) {
             return [];
         }
-        const [c, d]: [number, number] = this.options.standardScore as [number, number];
+        const [c, d]: [number, number] = this.options.standardScore;
         const result: IInstance[] = instances.map((item: IInstance) => {
             const newItem: IInstance = {};
             for (let attr in item) {
                 const [a, b] = [this.analityc.minValues[attr], this.analityc.maxValues[attr]];
-                newItem[attr] = (d - c)/(b - a) * (item[attr] - a) + c;
+                newItem[attr] = (d - c) / (b - a) * (item[attr] - a) + c;
             }
-            console.log(newItem);
             return newItem;
         });
-
         return result;
     }
 
@@ -147,6 +153,29 @@ export class Algorithm {
             }
         }
         return false;
+    }
+
+    private filterOutlier(data: IInstance[]): IInstance[] {
+        return [];
+    }
+
+    private countQuartile(data: IInstance[]): [IInstance, IInstance, IInstance] {
+        const quartile1: IInstance = {};
+        const quartile2: IInstance = {};
+        const quartile3: IInstance = {};
+        const isOddLenght = data.length % 2 !== 0;
+        const half = Math.floor(data.length / 2);
+        const mediana = (list: number[]) => list.length / 2 === 0 ? (list[list.length / 2] + list[(list.length / 2) - 1]) / 2 :
+            list[Math.floor(list.length / 2)];
+        this.attributes.forEach(attr => {
+            const values = data.map(item => item[attr]).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+            const part1 = values.slice(0, half + (isOddLenght ? 1 : 0));
+            const part2 = values.slice(half);
+            quartile1[attr] = mediana(part1);
+            quartile2[attr] = mediana(values);
+            quartile3[attr] = mediana(part2);
+        })
+        return [quartile1, quartile2, quartile3];
     }
 }
 

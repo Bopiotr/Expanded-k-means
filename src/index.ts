@@ -15,8 +15,8 @@ async function main() {
         reRandomCentroidAfterIterations: 1200
     } as IOptions);
 
-    algorithm.buildClusters();
-    console.log(algorithm.clusters);
+    // algorithm.buildClusters();
+    // console.log(algorithm.clusters);
 }
 
 main();

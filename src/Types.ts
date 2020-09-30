@@ -17,12 +17,14 @@ export interface ICluster {
 export interface IOptions {
     distanceFunction: DistanceFunctionType;
     numClusters: number;
-    standardScore: [number, number] | false;
+    standardScore: [number, number];
     iterationLimit?: number;
     reRandomCentroidAfterIterations?: number;
+    includeOutlier: boolean;
 }
 
 export interface IAnalitycsObjects {
     minValues: IInstance,
-    maxValues: IInstance
+    maxValues: IInstance,
+    quartiles: [IInstance, IInstance, IInstance]
 }
