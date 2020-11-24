@@ -1,4 +1,4 @@
-import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects} from '../Types';
+import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects, IOutputData} from '../Types';
 import {Random} from 'random-js';
 import {euclideanDistance} from '../distanes/distancesFunctions';
 
@@ -6,41 +6,69 @@ export class Algorithm {
     private static defaultOptions: IOptions = {
         numClusters: 4,
         distanceFunction: euclideanDistance,
-        includeOutlier: false
+        removeOutlier: false,
+        random: "RandomInstances",
+        standardScore: [0, 10]
     } as IOptions;
 
     public attributes: string[];
     public clusters: ICluster[];
     public options: IOptions;
     public analityc: IAnalitycsObjects;
+    public distanceGrid: number[][] = [];
     public readonly instances: IInstance[];
     public readonly copyInstances: IInstance[];
+
+    private iterations: number;
 
     constructor(data: IImportedData, options?: IOptions) {
         this.attributes = data.attributes;
         this.options = options || Algorithm.defaultOptions;
-        let filteredData = data.instances.filter(item => !this.hasUndefined(item));
-        if (!this.options.includeOutlier) {
-            this.analityc = {...this.analityc, quartiles: this.countQuartile(filteredData)}
+        let filteredData = data.instances
+            .filter(item => !this.hasUndefined(item));
+        if (this.options.removeOutlier) {
+            this.analityc = {...this.analityc, quartiles: this.countQuartile(filteredData), average: this.average(filteredData)}
             filteredData = [...this.filterOutlier(filteredData)];
         }
         this.analityc = {...this.analityc, ...this.countMinAndMaxValues(filteredData)};
-        if (!this.options.standardScore) {
-            this.instances = filteredData;
-        } else {
-            this.copyInstances = {...filteredData};
-            this.instances = this.normalizeInstances(filteredData);
+        this.copyInstances = [...filteredData];
+        this.instances = this.normalizeInstances(filteredData);
+        for(let i = 0; i < this.instances.length; ++i) {
+            this.distanceGrid.push([]);
+            for (let j = 0; j < this.instances.length; ++j) {
+                if (i === j) {
+                    this.distanceGrid[i].push(null);
+                }
+                this.distanceGrid[i].push(this.options.distanceFunction(this.instances[i], this.instances[j]));
+            }
         }
+        console.log(this.distanceGrid);
+
     }
 
+    public get outputData(): IOutputData {
+        if (!this.clusters || !this.clusters.length) {
+            return null;
+        }
+        return {
+            values: this.copyInstances,
+            normalizeValues: this.instances,
+            options: this.options,
+            clusters: this.clusters,
+            statistics: this.analityc,
+            attributes: this.attributes,
+            iterations: this.iterations || -1,
+            objectsLength: this.instances.length
+        } as IOutputData;
+    }
+// Siatka/ Mapa odległości 
     public buildClusters(): void {
-        this.randomCentroids();
+        this.options.random === 'RandomValues' ? this.randomClusters() : this.assignRandomInstancesAsClusters();
         let continueIterations = false;
         let iterator = 0;
-        console.group('Iterations Counting:');
         do {
             if (this.options.reRandomCentroidAfterIterations && (iterator % this.options.reRandomCentroidAfterIterations === 0)) {
-                this.randomCentroids();
+                this.options.random === 'RandomValues' ? this.randomClusters() : this.assignRandomInstancesAsClusters();
             }
             this.assignObjectsToClusters();
             continueIterations = false;
@@ -51,8 +79,9 @@ export class Algorithm {
                     const sum: number = value.objects.map(item => item[attr])
                         .reduce((total: number, aNumber: number) => total + aNumber, 0);
                     newMid[attr] = sum / value.objects.length;
-                    if (!this.options.iterationLimit || iterator < this.options.iterationLimit) {
-                        continueIterations = newMid[attr] !== value.centroid[attr];
+                    // bug: comparnig doubles !!!
+                    if ((!this.options.iterationLimit || iterator < this.options.iterationLimit)) {
+                        continueIterations = continueIterations || (Math.abs(newMid[attr] - value.centroid[attr]) > 0.0001);
                     }
                 });
                 this.clusters[index] = {
@@ -60,13 +89,19 @@ export class Algorithm {
                     centroid: !value.objects.length ? this.clusters[index].centroid : newMid
                 } as ICluster;
             });
-            console.clear()
-            console.count('Iteration counter: ');
+            console.clear();
+            console.log(iterator);
         } while (continueIterations);
-        console.groupEnd();
+        this.iterations = iterator;
     }
 
     private countMinAndMaxValues(instances: IInstance[]): IAnalitycsObjects {
+        if (!instances || !instances.length) {
+            return {
+                minValues: {},
+                maxValues: {}
+            } as IAnalitycsObjects;
+        }
         const minValuesInstance: IInstance = {...instances[0]};
         const maxValuesInstance: IInstance = {...instances[0]};
         this.attributes.forEach((attr: string) => {
@@ -76,22 +111,33 @@ export class Algorithm {
             })
         });
         return {
-            minValues: minValuesInstance,
-            maxValues: maxValuesInstance
+            minValues: maxValuesInstance,
+            maxValues: minValuesInstance
         } as IAnalitycsObjects;
     }
 
-    private randomCentroids(): void {
+    private randomClusters(): void {
         this.clusters = [];
         const minVal = this.options.standardScore && this.options.standardScore[0];
         const maxVal = this.options.standardScore && this.options.standardScore[1];
-        const random: Random = new Random();
+        const random = new Random();
         for (let i = 0; i < this.options.numClusters; ++i) {
             const centroid: IInstance = {};
             this.attributes.forEach((attr: string) => {
                 centroid[attr] = random.real(minVal || this.analityc.minValues[attr], maxVal || this.analityc.maxValues[attr]);
             });
             this.clusters.push({centroid: centroid, objects: []} as ICluster);
+        }
+    }
+
+    private assignRandomInstancesAsClusters(): void {
+        this.clusters = [];
+        const random = new Random();
+        for (let i = 0; i < this.options.numClusters; ++i) {
+            this.clusters.push({
+                centroid: {...this.instances[random.integer(0, this.instances.length)]},
+                objects: []
+            } as  ICluster);
         }
     }
 
@@ -105,12 +151,7 @@ export class Algorithm {
         } as ICluster));
 
         this.instances.forEach((currentInstance: IInstance) => {
-            for (let x in currentInstance) {
-                if (!currentInstance[x]) {
-                    return;
-                }
-            }
-            let nearestCent: { centroidIndex: number, distance: number } = {
+            let nearestCent = {
                 centroidIndex: 0,
                 distance: this.options.distanceFunction(currentInstance, this.clusters[0].centroid)
             };
@@ -125,7 +166,7 @@ export class Algorithm {
             });
             newClusters[nearestCent.centroidIndex].objects.push(currentInstance);
         });
-        this.clusters = [...newClusters];
+        this.clusters = newClusters;
     }
 
     private normalizeInstances(instances: IInstance[]): IInstance[] {
@@ -135,7 +176,7 @@ export class Algorithm {
             return [];
         }
         const [c, d]: [number, number] = this.options.standardScore;
-        const result: IInstance[] = instances.map((item: IInstance) => {
+        return instances.map((item: IInstance) => {
             const newItem: IInstance = {};
             for (let attr in item) {
                 const [a, b] = [this.analityc.minValues[attr], this.analityc.maxValues[attr]];
@@ -143,7 +184,6 @@ export class Algorithm {
             }
             return newItem;
         });
-        return result;
     }
 
     private hasUndefined(item: any): boolean {
@@ -155,8 +195,16 @@ export class Algorithm {
         return false;
     }
 
-    private filterOutlier(data: IInstance[]): IInstance[] {
-        return [];
+    private filterOutlier(data: IInstance[], k: number = 1.5): IInstance[] {
+        let result = [...data];
+        this.attributes.forEach(attr => {
+            const q1 = this.analityc.quartiles[0][attr];
+            const q3 = this.analityc.quartiles[2][attr];
+            const left = q1 - (k*(q3 - q1));
+            const right = q3 + (k*(q3 - q1));
+            result = result.filter((item => item[attr] >= left && item[attr] <= right));
+        })
+        return result;
     }
 
     private countQuartile(data: IInstance[]): [IInstance, IInstance, IInstance] {
@@ -177,38 +225,26 @@ export class Algorithm {
         })
         return [quartile1, quartile2, quartile3];
     }
+
+    private average(instances: IInstance[]): IInstance {
+        const result = {} as IInstance;
+        this.attributes.forEach(attr => {
+            let sum = 0;
+            instances.forEach(item => sum += item[attr]);
+            result[attr] = sum / instances.length;
+        })
+        return result;
+    }
 }
 
 /*
 *   IDEA FOR CENTROID
 * first centroids style
-*   1) Fully random
-*   2) Random between minValues & maxValues // O(n^2)
 *   3) Sort by most important atrribute and create centroids by part measures (new method)
 * */
 
-/*
-*   idea of prioritization
-* */
 
 /*
 * Idea of diffrent options objects
 *
 * */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

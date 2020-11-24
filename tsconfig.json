@@ -8,5 +8,7 @@
 //    "experimentalDecorators": true,
 //    "emitDecoratorMetadata": true,
     "baseUrl": "."
-  }
+  },
+  "include": ["./src/*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -6,7 +6,7 @@ export interface IImportedData {
 }
 
 export interface IInstance {
-    [key: string]: number
+    [key: string]: number;
 }
 
 export interface ICluster {
@@ -18,13 +18,26 @@ export interface IOptions {
     distanceFunction: DistanceFunctionType;
     numClusters: number;
     standardScore: [number, number];
+    random: 'RandomValues' | 'RandomInstances';
     iterationLimit?: number;
     reRandomCentroidAfterIterations?: number;
-    includeOutlier: boolean;
+    removeOutlier: boolean;
 }
 
 export interface IAnalitycsObjects {
-    minValues: IInstance,
-    maxValues: IInstance,
-    quartiles: [IInstance, IInstance, IInstance]
+    minValues: IInstance;
+    maxValues: IInstance;
+    quartiles: [IInstance, IInstance, IInstance];
+    average: IInstance;
+}
+
+
+export interface IOutputData {
+    values: IInstance[];
+    normalizeValues?: IInstance[];
+    statistics: IAnalitycsObjects;
+    clusters: ICluster[];
+    options: IOptions;
+    attributes: string[];
+    iterations: number;
 }

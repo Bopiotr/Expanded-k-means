@@ -1,4 +1,4 @@
-import {IInstance, IImportedData} from "../Types";
+import {IInstance, IImportedData, IOutputData} from "../Types";
 import {Transform} from "stream";
 
 const fs = require('fs');
