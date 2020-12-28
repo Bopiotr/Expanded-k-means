@@ -18,7 +18,7 @@ export interface IOptions {
     distanceFunction: DistanceFunctionType;
     numClusters: number;
     standardScore: [number, number];
-    random: 'RandomValues' | 'RandomInstances';
+    random: 'RandomValues' | 'RandomInstances' | 'Dupa';
     iterationLimit?: number;
     reRandomCentroidAfterIterations?: number;
     removeOutlier: boolean;
