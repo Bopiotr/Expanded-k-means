@@ -27,9 +27,11 @@ export interface IOptions {
 export interface IAnalitycsObjects {
     minValues: IInstance;
     maxValues: IInstance;
-    quartiles: [IInstance, IInstance, IInstance];
+    quartiles: Quartiles;
     average: IInstance;
 }
+
+export type Quartiles = [IInstance, IInstance, IInstance];
 
 
 export interface IOutputData {

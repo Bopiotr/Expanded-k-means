@@ -49,7 +49,7 @@ async function startServer() {
             standardScore: [0, 1000],
             iterationLimit: 10000
         } as IOptions);
-        algorithmPoint.buildClusters();
+        // algorithmPoint.buildClusters();
         res.send(algorithmPoint.outputData);
     });
     app.listen(3000);
@@ -67,8 +67,8 @@ function pointsLocal() {
             standardScore: [0, 1000],
             removeOutlier: true
         } as IOptions);
-        algorithmPoint.buildClusters();
-        console.log(algorithmPoint.outputData);
+        // algorithmPoint.buildClusters();
+        // console.log(algorithmPoint.outputData.clusters);
 }
 
 async function main() {
@@ -80,7 +80,7 @@ async function main() {
 
 function createPoints(): IInstance[] {
     const result = [];
-    for (let i = 0; i < 1000; ++i) {
+    for (let i = 0; i < 10; ++i) {
         const x = new Random().real(1, 1000);
         const y = new Random().real(1, 1000);
         result.push({x: x, y: y} as IInstance);
