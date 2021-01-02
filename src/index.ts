@@ -73,14 +73,14 @@ function pointsLocal() {
 
 async function main() {
     pointsLocal();
-    // await startServer();
+    await startServer();
 }
 
 // server is created for testing in web app
 
 function createPoints(): IInstance[] {
     const result = [];
-    for (let i = 0; i < 10; ++i) {
+    for (let i = 0; i < 1000; ++i) {
         const x = new Random().real(1, 1000);
         const y = new Random().real(1, 1000);
         result.push({x: x, y: y} as IInstance);

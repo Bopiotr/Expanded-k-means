@@ -137,23 +137,28 @@ export class Utils {
                     }
                 }
                 keys = keys.filter(key => maxDistance > distanceMap.get(key));
-                if (nKeys.length < keys.length) {
+                if (nKeys.length < keys.length || nKeys.length === 0) {
                     newCentroid = point;
                     nKeys = keys;
                 }
             });
             const newCluster: ICluster = {centroid: newCentroid as IInstance, objects: []};
-            for (const pointId in nKeys.map(key => key[0] !== newCentroid._id ? key[0] : key[1])) {
+            const pointsIds = nKeys.map(key => key[0] !== newCentroid._id ? key[0] : key[1]);
+            console.log(pointsIds);
+            for (const pointId in pointsIds) {
                 if (!points.find(value => value._id === +pointId)) {
-                    console.log(points);
+                    // console.log(points);
                     console.log(pointId);
+                    console.log(pointsIds);
                     throw new Error("Dupa");
                 }
                 newCluster.objects.push({...points.find(value => value._id === +pointId)});
                 points = points.filter(value => value._id !== +pointId);
             }
             points = points.filter(value => value._id !== newCentroid._id);
+            console.log(distanceMap.size, '   ',nKeys.length);
             nKeys.forEach(key => distanceMap.delete(key));
+            console.log(distanceMap.size, '   ',nKeys.length);
             result.push(newCluster);
         }
         return result;
