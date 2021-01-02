@@ -2,7 +2,7 @@ import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects, IOutput
 import {Random} from 'random-js';
 import {DistanceFunctionType, euclideanDistance} from '../distanes/distancesFunctions';
 import {Utils} from "./utils";
-import {DistanceMap} from "./distanceMap";
+import {ClusterBuilder} from "./clusterBuilder";
 
 export class Algorithm {
     public static defaultOptions: IOptions = {
@@ -16,11 +16,12 @@ export class Algorithm {
     public clusters: ICluster[];
     public options: IOptions;
     public analityc: IAnalitycsObjects;
-    public distanceGrid: DistanceMap;
+    public distanceGrid: ClusterBuilder;
     public readonly data: IImportedData;
     public readonly instances: IInstance[];
 
     private iterations: number;
+    private firstClusters: ICluster[];
 
     constructor(data: IImportedData, options?: IOptions) {
         console.log('Preprocesing.....');
@@ -38,12 +39,8 @@ export class Algorithm {
         console.log('Preprocesing done!');
         console.log('Start building distance grid....');
         // errro if instances.lenght > 4990
-        this.distanceGrid = new DistanceMap();
-        this.distanceGrid.build(this.instances, this.options.distanceFunction);
-        // console.log(this.distanceGrid.distanceMap);
-        // console.log('Creating clusters...');
-        this.clusters = Utils.createClusters(this.instances, this.distanceGrid, this.options.numClusters);
-        // console.log(this.clusters);
+        this.clusters = Utils.createClusters(this.instances, this.options.distanceFunction, this.options.numClusters);
+        this.firstClusters = [...this.clusters];
     }
 
     public get outputData(): IOutputData {
@@ -58,7 +55,8 @@ export class Algorithm {
             statistics: this.analityc,
             attributes: this.data.attributes,
             iterations: this.iterations || -1,
-            objectsLength: this.instances.length
+            objectsLength: this.instances.length,
+            firstClusters: this.firstClusters
         } as IOutputData;
     }
 
@@ -91,8 +89,8 @@ export class Algorithm {
                     centroid: !value.objects.length ? this.clusters[index].centroid : newMid
                 } as ICluster;
             });
-            // console.clear();
-            // console.log(iterator);
+            console.clear();
+            console.log(iterator);
         } while (continueIterations);
         this.iterations = iterator;
     }

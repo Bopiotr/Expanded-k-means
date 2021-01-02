@@ -42,4 +42,5 @@ export interface IOutputData {
     options: IOptions;
     attributes: string[];
     iterations: number;
+    firstClusters: ICluster[];
 }

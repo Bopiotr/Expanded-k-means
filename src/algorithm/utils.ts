@@ -1,6 +1,7 @@
 import {IAnalitycsObjects, ICluster, IInstance, IOptions, Quartiles} from "../Types";
 import {Algorithm, IInstanceWithID} from "./algorithm";
-import {DistanceMap} from "./distanceMap";
+import {ClusterBuilder} from "./clusterBuilder";
+import {DistanceFunctionType} from "../distanes/distancesFunctions";
 
 export class Utils {
     public static exampleMethod(): void {
@@ -118,25 +119,25 @@ export class Utils {
         });
     }
 
-    public static createClusters(instances: IInstance[], distanceGrid: DistanceMap, k: number): ICluster[] {
+    public static createClusters(instances: IInstance[], distanceFunction: DistanceFunctionType, k: number): ICluster[] {
         const result: ICluster[] = [];
-        let points: IInstanceWithID[] = instances.map((value: IInstance, index: number) => ({...value, _id: index}));
-        const distanceMap: Map<[number, number], number> = new Map<[number, number], number>(distanceGrid.distanceMap);
+        const builder = new ClusterBuilder();
+        builder.build(instances, distanceFunction);
         for (let i = 0; i < k; ++i) {
-            const max = Utils.findMax(distanceMap);
-            // max distance /2 ?
-            const maxDistance = (max / k) / 2;
             let newCentroid: IInstanceWithID = {} as IInstanceWithID;
             let nKeys: [number, number][] = [];
-            points.forEach((point: IInstanceWithID) => {
+            builder.points.forEach((point: IInstanceWithID) => {
+                console.clear()
+                console.log('k: ' + i + ' point: ' + point._id);
                 let keys: [number, number][] = [];
-                for (const key of distanceMap.keys()) {
+                for (const key of builder.distanceMap.keys()) {
                     const [a, b] = key;
                     if (a === point._id || b === point._id) {
                         keys.push(key);
                     }
                 }
-                keys = keys.filter(key => maxDistance > distanceMap.get(key));
+                const maxDistance = builder.maxDistance(k);
+                keys = keys.filter(key => maxDistance > builder.distanceMap.get(key));
                 if (nKeys.length < keys.length || nKeys.length === 0) {
                     newCentroid = point;
                     nKeys = keys;
@@ -144,21 +145,21 @@ export class Utils {
             });
             const newCluster: ICluster = {centroid: newCentroid as IInstance, objects: []};
             const pointsIds = nKeys.map(key => key[0] !== newCentroid._id ? key[0] : key[1]);
-            console.log(pointsIds);
-            for (const pointId in pointsIds) {
-                if (!points.find(value => value._id === +pointId)) {
-                    // console.log(points);
-                    console.log(pointId);
-                    console.log(pointsIds);
-                    throw new Error("Dupa");
-                }
-                newCluster.objects.push({...points.find(value => value._id === +pointId)});
-                points = points.filter(value => value._id !== +pointId);
+            if (!pointsIds.length) {
+                builder.deleteById(newCentroid._id);
+                result.push(newCluster);
+                continue;
             }
-            points = points.filter(value => value._id !== newCentroid._id);
-            console.log(distanceMap.size, '   ',nKeys.length);
-            nKeys.forEach(key => distanceMap.delete(key));
-            console.log(distanceMap.size, '   ',nKeys.length);
+            for (const pointId of pointsIds) {
+                console.clear()
+                console.log('k: ' + i + 'point to add: ' + pointId);
+                if (!builder.getPoint(+pointId)) {
+                    throw new Error("Can't find point");
+                }
+                newCluster.objects.push({...builder.getPoint(+pointId)});
+                builder.deleteById(+pointId);
+            }
+            builder.deleteById(newCentroid._id);
             result.push(newCluster);
         }
         return result;
