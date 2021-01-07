@@ -1,8 +1,7 @@
 import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects, IOutputData} from '../Types';
 import {Random} from 'random-js';
-import {DistanceFunctionType, euclideanDistance} from '../distanes/distancesFunctions';
+import {euclideanDistance} from '../distanes/distancesFunctions';
 import {Utils} from "./utils";
-import {ClusterBuilder} from "./clusterBuilder";
 
 export class Algorithm {
     public static defaultOptions: IOptions = {
@@ -16,7 +15,6 @@ export class Algorithm {
     public clusters: ICluster[];
     public options: IOptions;
     public analityc: IAnalitycsObjects;
-    public distanceGrid: ClusterBuilder;
     public readonly data: IImportedData;
     public readonly instances: IInstance[];
 
@@ -27,7 +25,7 @@ export class Algorithm {
         console.log('Preprocesing.....');
         this.data = data;
         this.options = Utils.parseOptions(options);
-        let filteredData: IInstance[] = Utils.filterUndefined(data.instances);
+        let filteredData: IInstance[] = data.instances;
         this.instances = [...filteredData];
         this.analityc = {
             quartiles: Utils.countQuartile(filteredData, this.data.attributes),
@@ -81,7 +79,7 @@ export class Algorithm {
                     newMid[attr] = sum / value.objects.length;
                     // idea: comparing by cluster objects
                     if ((!this.options.iterationLimit || iterator < this.options.iterationLimit)) {
-                        continueIterations = continueIterations || (Math.abs(newMid[attr] - value.centroid[attr]) > 0.001);
+                        continueIterations = continueIterations || (Math.abs(newMid[attr] - value.centroid[attr]) > 1);
                     }
                 });
                 this.clusters[index] = {

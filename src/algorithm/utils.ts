@@ -10,7 +10,7 @@ export class Utils {
 
     public static hasUndefined<T>(item: T): boolean {
         for (let itemKey in item) {
-            if (!item[itemKey]) {
+            if (item[itemKey] === undefined || item[itemKey] === null) {
                 return true;
             }
         }
@@ -123,21 +123,15 @@ export class Utils {
         const result: ICluster[] = [];
         const builder = new ClusterBuilder();
         builder.build(instances, distanceFunction);
+        console.log(instances);
         for (let i = 0; i < k; ++i) {
             let newCentroid: IInstanceWithID = {} as IInstanceWithID;
             let nKeys: [number, number][] = [];
             builder.points.forEach((point: IInstanceWithID) => {
                 console.clear()
                 console.log('k: ' + i + ' point: ' + point._id);
-                let keys: [number, number][] = [];
-                for (const key of builder.distanceMap.keys()) {
-                    const [a, b] = key;
-                    if (a === point._id || b === point._id) {
-                        keys.push(key);
-                    }
-                }
                 const maxDistance = builder.maxDistance(k);
-                keys = keys.filter(key => maxDistance > builder.distanceMap.get(key));
+                const keys = builder.getPointKeys(point._id).filter(key => maxDistance > builder.distanceMap.get(key));
                 if (nKeys.length < keys.length || nKeys.length === 0) {
                     newCentroid = point;
                     nKeys = keys;
@@ -152,14 +146,14 @@ export class Utils {
             }
             for (const pointId of pointsIds) {
                 console.clear()
-                console.log('k: ' + i + 'point to add: ' + pointId);
-                if (!builder.getPoint(+pointId)) {
-                    throw new Error("Can't find point");
-                }
+                console.log('k: ' + i + ' point to add: ' + pointId);
                 newCluster.objects.push({...builder.getPoint(+pointId)});
-                builder.deleteById(+pointId);
             }
-            builder.deleteById(newCentroid._id);
+            console.clear();
+            console.log('Deleting...');
+            if (i !== (k-1)) {
+                builder.deleteById([...pointsIds, newCentroid._id]);
+            }
             result.push(newCluster);
         }
         return result;
