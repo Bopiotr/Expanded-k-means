@@ -9,7 +9,7 @@ export class Algorithm {
         distanceFunction: euclideanDistance,
         removeOutlier: true,
         random: "RandomInstances",
-        standardScore: [0, 100]
+        standardScore: [0, 80]
     } as IOptions;
 
     public clusters: ICluster[];
@@ -34,11 +34,13 @@ export class Algorithm {
         this.instances = this.options.removeOutlier ? Utils.filterOutlier(filteredData, data.attributes, this.analityc.quartiles) : this.instances;
         this.analityc = Utils.pushMinMax(this.analityc, this.instances, this.data.attributes);
         this.instances = Utils.normalizeInstances(this.instances, this.options.standardScore, this.analityc);
-        console.log('Preprocesing done!');
-        console.log('Start building distance grid....');
-        // errro if instances.lenght > 4990
-        this.clusters = Utils.createClusters(this.instances, this.options.distanceFunction, this.options.numClusters);
-        this.firstClusters = [...this.clusters];
+        if (this.options.random === 'Dupa') {
+            console.log('Preprocesing done!');
+            console.log('Start building distance grid....');
+            // errro if instances.lenght > 4990
+            this.clusters = Utils.createClusters(this.instances, this.options.distanceFunction, this.options.numClusters);
+            this.firstClusters = [...this.clusters];
+        }
     }
 
     public get outputData(): IOutputData {

@@ -4,6 +4,7 @@ import {IImportedData, IInstance, IOptions, IOutputData} from "./Types";
 import {euclideanDistance, pointsDistance} from "./distanes/distancesFunctions";
 import * as express from 'express';
 import {Random} from "random-js";
+import {countSilhouette} from "./silhouetteAnalysis";
 
 async function startServer() {
     const app = express();
@@ -81,18 +82,29 @@ function pointsLocal() {
         // console.log(algorithmPoint.outputData.clusters);
 }
 
-async function main() {
+function main() {
     // pointsLocal();
-    await startServer();
+    // await startServer();
+    const points = {attributes: ['x', 'y'], instances: createPoints()} as IImportedData;
+    const alg = new Algorithm(points, {
+        random: 'Dupa',
+        numClusters: 4,
+        removeOutlier: true,
+        standardScore: [0, 60],
+        distanceFunction: pointsDistance
+    } as IOptions);
+    alg.buildClusters();
+    const result = countSilhouette(alg.clusters, alg.options.distanceFunction);
+    console.log(result);
 }
 
 // server is created for testing in web app
 
 function createPoints(): IInstance[] {
     const result = [];
-    for (let i = 0; i < 4800; ++i) {
-        const x = new Random().real(1, 1000);
-        const y = new Random().real(1, 1000);
+    for (let i = 0; i < 47; ++i) {
+        const x = new Random().real(1, 60);
+        const y = new Random().real(1, 60);
         result.push({x: x, y: y} as IInstance);
     }
     return result;
