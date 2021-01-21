@@ -20,7 +20,6 @@ export interface IOptions {
     standardScore: [number, number];
     random: 'RandomValues' | 'RandomInstances' | 'Dupa';
     iterationLimit?: number;
-    reRandomCentroidAfterIterations?: number;
     removeOutlier: boolean;
 }
 

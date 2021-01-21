@@ -19,7 +19,6 @@ async function startServer() {
             distanceFunction: euclideanDistance,
             random: "RandomInstances",
             standardScore: [0, 100],
-            // reRandomCentroidAfterIterations: 40,
             iterationLimit: 30000,
             removeOutlier: true
         } as IOptions);

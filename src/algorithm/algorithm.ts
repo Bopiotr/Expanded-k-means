@@ -59,32 +59,38 @@ export class Algorithm {
     }
 
     public buildClusters(): void {
-        if (this.options.random !== 'Dupa') {
-            this.options.random === 'RandomValues' ? this.randomClusters() : this.assignRandomInstancesAsClusters();
+        switch (this.options.random) {
+            case "Dupa":
+                break;
+            case "RandomInstances":
+                this.assignRandomInstancesAsClusters();
+                break;
+            case "RandomValues":
+                this.randomClusters();
+                break;
+            default:
+                throw new Error("Random Style not provided");
         }
         let continueIterations = false;
         let iterator = 0;
         do {
-            if (this.options.reRandomCentroidAfterIterations && (iterator % this.options.reRandomCentroidAfterIterations === 0)) {
-                this.options.random === 'RandomValues' ? this.randomClusters() : this.assignRandomInstancesAsClusters();
-            }
             this.assignObjectsToClusters();
             continueIterations = false;
             ++iterator;
-            this.clusters.forEach((value: ICluster, index: number) => {
+            this.clusters.forEach((currentCluster: ICluster, index: number) => {
                 let newMid: IInstance = {};
                 this.data.attributes.forEach(attr => {
-                    const sum: number = value.objects.map(item => item[attr])
+                    const sum: number = currentCluster.objects.map(item => item[attr])
                         .reduce((total: number, aNumber: number) => total + aNumber, 0);
-                    newMid[attr] = sum / value.objects.length;
+                    newMid[attr] = sum / currentCluster.objects.length;
                     // idea: comparing by cluster objects
-                    if ((!this.options.iterationLimit || iterator < this.options.iterationLimit)) {
-                        continueIterations = continueIterations || (Math.abs(newMid[attr] - value.centroid[attr]) > 1);
+                    if (!this.options.iterationLimit || iterator < this.options.iterationLimit) {
+                        continueIterations = continueIterations || (Math.abs(newMid[attr] - currentCluster.centroid[attr]) > 1);
                     }
                 });
                 this.clusters[index] = {
-                    ...value,
-                    centroid: !value.objects.length ? this.clusters[index].centroid : newMid
+                    ...currentCluster,
+                    centroid: !currentCluster.objects.length ? this.clusters[index].centroid : newMid
                 } as ICluster;
             });
             console.clear();
