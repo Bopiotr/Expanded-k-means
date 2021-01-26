@@ -33,20 +33,30 @@ export async function readCsvData(path: string): Promise<IImportedData> {
     }))
 }
 
-export async function saveCsvClusters(clusters: ICluster[], path: string) {
-    let result = 'x,y,label\n'
-    clusters.forEach(({objects, centroid}, index) => {
-        result += '' + centroid['x'] + ',' + centroid['y'] + ',cluster\n';
+export function saveCsvClusters(clusters: ICluster[], path: string, includeCentroid: boolean = false) {
+    const attr: (keyof IInstance)[] = Object.keys(clusters[0].centroid);
+    let result: string = attr.join(',');
+    result += ',label\n';
+    const objToTab = (obj: IInstance): string[] => {
+        const tab: string[] = [];
+        attr.forEach(key => tab.push(obj[key].toString()));
+        return tab;
+    }
+
+    clusters.forEach(({objects, centroid}: { objects: IInstance[], centroid: IInstance }, index: number) => {
+        if (includeCentroid) {
+            result += objToTab(centroid).join(',') + ',cluster\n';
+        }
         objects.forEach(obj => {
-            result += '' + obj['x'] + ',' + obj['y'] + ',C' + index + '\n';
+            result += objToTab(obj).join(',') + ',C' + index + '\n';
         })
     })
+
     fs.writeFile(path, result, function (err) {
         if (err) {
             console.log(err);
         } else {
             console.log('write success');
         }
-
     })
 }

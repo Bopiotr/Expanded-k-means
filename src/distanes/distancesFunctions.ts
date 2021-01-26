@@ -18,16 +18,18 @@ export const pointsDistance: DistanceFunctionType = (a: IInstance, b: IInstance)
     return Math.sqrt((Math.pow(b.x-a.x, 2) + Math.pow(b.y-a.y, 2)));
 }
 
-export const minkowskiDistance: DistanceFunctionType = (x: IInstance, y: IInstance, p = 2) => {
-    let sum = 0;
-    for (const attr in x) {
-        let v = x[attr] - y[attr];
-        if (v < 0) {
-            v = -v;
+export const minkowskiDistance: (p: number) => DistanceFunctionType = (p: number = 2): DistanceFunctionType => {
+    return (x: IInstance, y: IInstance): number => {
+        let sum = 0;
+        for (const attr in x) {
+            let v = x[attr] - y[attr];
+            if (v < 0) {
+                v = -v;
+            }
+            sum += Math.pow(v, p);
         }
-        sum += Math.pow(v, p);
+        return Math.pow(sum, 1/p);
     }
-    return Math.pow(sum, 1/p);
 }
 
 export const mhttnDistance: DistanceFunctionType = (x: IInstance, y: IInstance) => {

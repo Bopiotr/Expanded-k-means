@@ -18,7 +18,7 @@ export interface IOptions {
     distanceFunction: DistanceFunctionType;
     numClusters: number;
     standardScore: [number, number];
-    random: 'RandomValues' | 'RandomInstances' | 'Dupa';
+    random: 'RandomValues' | 'RandomInstances' | 'CountClusters';
     iterationLimit?: number;
     removeOutlier: boolean;
 }
@@ -42,4 +42,8 @@ export interface IOutputData {
     attributes: string[];
     iterations: number;
     firstClusters: ICluster[];
+}
+
+export interface IInstanceWithID extends IInstance {
+    _id: number
 }

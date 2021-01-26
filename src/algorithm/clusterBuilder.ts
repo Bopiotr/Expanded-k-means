@@ -1,6 +1,5 @@
-import {IInstance} from "../Types";
+import {IInstance, IInstanceWithID} from "../Types";
 import {DistanceFunctionType} from "../distanes/distancesFunctions";
-import {IInstanceWithID} from "./algorithm";
 
 export class ClusterBuilder {
     public points: IInstanceWithID[] = [];

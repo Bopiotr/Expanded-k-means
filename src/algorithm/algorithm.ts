@@ -25,7 +25,7 @@ export class Algorithm {
         console.log('Preprocesing.....');
         this.data = data;
         this.options = Utils.parseOptions(options);
-        let filteredData: IInstance[] = data.instances;
+        let filteredData: IInstance[] = data.instances.filter(Utils.hasUndefined);
         this.instances = [...filteredData];
         this.analityc = {
             quartiles: Utils.countQuartile(filteredData, this.data.attributes),
@@ -34,7 +34,7 @@ export class Algorithm {
         this.instances = this.options.removeOutlier ? Utils.filterOutlier(filteredData, data.attributes, this.analityc.quartiles) : this.instances;
         this.analityc = Utils.pushMinMax(this.analityc, this.instances, this.data.attributes);
         this.instances = Utils.normalizeInstances(this.instances, this.options.standardScore, this.analityc);
-        if (this.options.random === 'Dupa') {
+        if (this.options.random === 'CountClusters') {
             console.log('Preprocesing done!');
             console.log('Start building distance grid....');
             // errro if instances.lenght > 4990
@@ -62,7 +62,7 @@ export class Algorithm {
 
     public buildClusters(): void {
         switch (this.options.random) {
-            case "Dupa":
+            case "CountClusters":
                 break;
             case "RandomInstances":
                 this.assignRandomInstancesAsClusters();
@@ -153,8 +153,4 @@ export class Algorithm {
         });
         this.clusters = newClusters;
     }
-}
-
-export interface IInstanceWithID extends IInstance {
-    _id: number
 }

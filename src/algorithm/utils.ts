@@ -1,20 +1,17 @@
-import {IAnalitycsObjects, ICluster, IInstance, IOptions, Quartiles} from "../Types";
-import {Algorithm, IInstanceWithID} from "./algorithm";
+import {IAnalitycsObjects, ICluster, IInstance, IInstanceWithID, IOptions, Quartiles} from "../Types";
+import {Algorithm} from "./algorithm";
 import {ClusterBuilder} from "./clusterBuilder";
 import {DistanceFunctionType} from "../distanes/distancesFunctions";
 
 export class Utils {
-    public static exampleMethod(): void {
-        console.log('Hello world');
-    }
 
     public static hasUndefined<T>(item: T): boolean {
         for (let itemKey in item) {
             if (item[itemKey] === undefined || item[itemKey] === null) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public static parseOptions(options?: IOptions): IOptions {
