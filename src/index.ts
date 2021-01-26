@@ -1,7 +1,7 @@
-import {readCsvData} from "./dataReaders/dataR&W";
+import {readCsvData, saveCsvClusters} from "./dataReaders/dataR&W";
 import {Algorithm} from "./algorithm/algorithm";
 import {IImportedData, IInstance, IOptions, IOutputData} from "./Types";
-import {euclideanDistance, pointsDistance} from "./distanes/distancesFunctions";
+import {euclideanDistance, mhttnDistance, pointsDistance} from "./distanes/distancesFunctions";
 import * as express from 'express';
 import {Random} from "random-js";
 import {countSilhouette} from "./silhouetteAnalysis";
@@ -88,14 +88,17 @@ function main() {
     const points = {attributes: ['x', 'y'], instances: createPoints()} as IImportedData;
     const alg = new Algorithm(points, {
         random: 'Dupa',
-        numClusters: 4,
+        numClusters: 3,
         removeOutlier: true,
-        standardScore: [0, 60],
-        distanceFunction: pointsDistance
+        standardScore: [0, 10],
+        distanceFunction: mhttnDistance
     } as IOptions);
     alg.buildClusters();
-    const result = countSilhouette(alg.clusters, alg.options.distanceFunction);
-    console.log(result);
+    const result = alg.outputData;
+    const silhouette = countSilhouette(alg.clusters, alg.options.distanceFunction);
+    silhouette.forEach(val => val.sort((a,b) => a > b ? -1 : a === b ? 0 : 1));
+    console.log(silhouette);
+    saveCsvClusters(result.clusters, './res/pointsOut.csv');
 }
 
 // server is created for testing in web app
@@ -103,11 +106,12 @@ function main() {
 function createPoints(): IInstance[] {
     const result = [];
     for (let i = 0; i < 47; ++i) {
-        const x = new Random().real(1, 60);
-        const y = new Random().real(1, 60);
+        const x = new Random().real(1, 20);
+        const y = new Random().real(1, 20);
         result.push({x: x, y: y} as IInstance);
     }
     return result;
 }
 
 main();
+

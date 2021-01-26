@@ -11,7 +11,7 @@ export const euclideanDistance: DistanceFunctionType = (x: IInstance, y: IInstan
         }
         sum += Math.pow(v, 2);
     }
-    return Math.pow(sum, 2);
+    return Math.pow(sum, 0.5);
 };
 
 export const pointsDistance: DistanceFunctionType = (a: IInstance, b: IInstance): number => {

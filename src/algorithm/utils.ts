@@ -28,10 +28,6 @@ export class Utils {
         } as IOptions;
     }
 
-    public static filterUndefined(instances: IInstance[]): IInstance[] {
-        return instances.filter(item => !Utils.hasUndefined(item));
-    }
-
     public static countQuartile(data: IInstance[], attributes: string[]): [IInstance, IInstance, IInstance] {
         const quartile1: IInstance = {};
         const quartile2: IInstance = {};
@@ -131,7 +127,11 @@ export class Utils {
                 console.clear()
                 console.log('k: ' + i + ' point: ' + point._id);
                 const maxDistance = builder.maxDistance(k);
-                const keys = builder.getPointKeys(point._id).filter(key => maxDistance > builder.distanceMap.get(key));
+                const keys = builder.getPointKeys(point._id).filter(key => {
+                    const dupa = builder.distanceMap.get(key);
+                    const result = maxDistance > dupa;
+                    return result;
+                });
                 if (nKeys.length < keys.length || nKeys.length === 0) {
                     newCentroid = point;
                     nKeys = keys;
@@ -157,11 +157,5 @@ export class Utils {
             result.push(newCluster);
         }
         return result;
-    }
-
-    public static findMax(map: Map<any, number>): number {
-        let max = -1;
-        map.forEach((value: number) => max = max < value ? value : max)
-        return max;
     }
 }

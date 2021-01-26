@@ -1,4 +1,4 @@
-import {IInstance, IImportedData, IOutputData} from "../Types";
+import {IInstance, IImportedData, IOutputData, ICluster} from "../Types";
 import {Transform} from "stream";
 
 const fs = require('fs');
@@ -31,4 +31,22 @@ export async function readCsvData(path: string): Promise<IImportedData> {
             reject(error);
         }
     }))
+}
+
+export async function saveCsvClusters(clusters: ICluster[], path: string) {
+    let result = 'x,y,label\n'
+    clusters.forEach(({objects, centroid}, index) => {
+        result += '' + centroid['x'] + ',' + centroid['y'] + ',cluster\n';
+        objects.forEach(obj => {
+            result += '' + obj['x'] + ',' + obj['y'] + ',C' + index + '\n';
+        })
+    })
+    fs.writeFile(path, result, function (err) {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log('write success');
+        }
+
+    })
 }
