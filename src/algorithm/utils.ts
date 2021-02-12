@@ -1,4 +1,4 @@
-import {IAnalitycsObjects, ICluster, IInstance, IInstanceWithID, IOptions, Quartiles} from "../Types";
+import {IAnalitycsObjects, ICluster, IInstance, IInstanceWithID, IOptions, IOutputData, Quartiles} from "../Types";
 import {Algorithm} from "./algorithm";
 import {ClusterBuilder} from "./clusterBuilder";
 import {DistanceFunctionType} from "../distanes/distancesFunctions";
@@ -106,7 +106,15 @@ export class Utils {
             for (let attr in item) {
                 const min = analytic.minValues[attr];
                 const max = analytic.maxValues[attr];
-                newItem[attr] = (b - a) / (max - min) * (item[attr] - min) + a;
+                const m1 = (b - a);
+                const m2 = (max - min) * (item[attr] - min) + a;
+                newItem[attr] = m1 / m2;
+                if (isNaN(newItem[attr])) {
+                    throw  Error('NaN');
+                }
+                if (newItem[attr] === Infinity) {
+                    throw Error('Infinity');
+                }
             }
             return newItem;
         });
@@ -122,9 +130,9 @@ export class Utils {
             let nKeys: [number, number][] = [];
             builder.points.forEach((point: IInstanceWithID) => {
                 console.clear()
-                console.log('k: ' + i + ' point: ' + point._id);
+                console.log('k: ' + i + ' point: ' + point.__id);
                 const maxDistance = builder.maxDistance(k);
-                const keys = builder.getPointKeys(point._id).filter(key => {
+                const keys = builder.getPointKeys(point.__id).filter(key => {
                     const dupa = builder.distanceMap.get(key);
                     const result = maxDistance > dupa;
                     return result;
@@ -135,9 +143,9 @@ export class Utils {
                 }
             });
             const newCluster: ICluster = {centroid: newCentroid as IInstance, objects: []};
-            const pointsIds = nKeys.map(key => key[0] !== newCentroid._id ? key[0] : key[1]);
+            const pointsIds = nKeys.map(key => key[0] !== newCentroid.__id ? key[0] : key[1]);
             if (!pointsIds.length) {
-                builder.deleteById(newCentroid._id);
+                builder.deleteById(newCentroid.__id);
                 result.push(newCluster);
                 continue;
             }
@@ -149,10 +157,34 @@ export class Utils {
             console.clear();
             console.log('Deleting...');
             if (i !== (k-1)) {
-                builder.deleteById([...pointsIds, newCentroid._id]);
+                builder.deleteById([...pointsIds, newCentroid.__id]);
             }
             result.push(newCluster);
         }
         return result;
+    }
+
+    public static prepareData(output: IOutputData): ICluster[] {
+        return output.clusters.map(cluster => {
+            const res = { centroid: {}, objects: [] } as ICluster;
+            output.attributes.forEach(attr => {
+                res.centroid[attr] = Utils.deNormalizing(cluster.centroid[attr], attr, output);
+            });
+            res.objects = cluster.objects.map(instance => {
+                const newInstance = {};
+                output.attributes.forEach(attr => {
+                    newInstance[attr] = Utils.deNormalizing(instance[attr], attr, output);
+                })
+                return newInstance;
+            })
+            return res;
+        })
+    }
+
+    public static deNormalizing(value: number, attr: string, options: IOutputData): number {
+        const [c, d] = options.options.standardScore;
+        const a = options.statistics.minValues[attr];
+        const b = options.statistics.maxValues[attr];
+        return  ((value - c) * ((b - a) / (d - c))) + a;
     }
 }

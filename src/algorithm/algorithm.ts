@@ -1,12 +1,12 @@
 import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects, IOutputData} from '../Types';
 import {Random} from 'random-js';
-import {euclideanDistance} from '../distanes/distancesFunctions';
+import {defaultDistance} from '../distanes/distancesFunctions';
 import {Utils} from "./utils";
 
 export class Algorithm {
     public static defaultOptions: IOptions = {
         numClusters: 4,
-        distanceFunction: euclideanDistance,
+        distanceFunction: defaultDistance,
         removeOutlier: true,
         random: "RandomInstances",
         standardScore: [0, 80]
@@ -87,7 +87,7 @@ export class Algorithm {
                     newMid[attr] = sum / currentCluster.objects.length;
                     // idea: comparing by cluster objects
                     if (!this.options.iterationLimit || iterator < this.options.iterationLimit) {
-                        continueIterations = continueIterations || (Math.abs(newMid[attr] - currentCluster.centroid[attr]) > 1);
+                        continueIterations = continueIterations || (Math.abs(newMid[attr] - currentCluster.centroid[attr]) > 0.009);
                     }
                 });
                 this.clusters[index] = {

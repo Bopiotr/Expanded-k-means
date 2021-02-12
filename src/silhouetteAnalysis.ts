@@ -3,8 +3,10 @@ import {DistanceFunctionType} from "./distanes/distancesFunctions";
 
 export type SilhouetteCoefficients = number[][];
 
-export const countSilhouette = (clusters: ICluster[], distance: DistanceFunctionType): SilhouetteCoefficients => {
+export const countSilhouette = (clusters: ICluster[], distance: DistanceFunctionType): [SilhouetteCoefficients, number] => {
   const result: SilhouetteCoefficients = [];
+  let sum = 0;
+  let lenght = 0;
   clusters.forEach(({objects}: {objects: IInstance[]}, index: number) => {
     result[index] = [];
     for (let i = 0; i < objects.length; i++) {
@@ -13,9 +15,11 @@ export const countSilhouette = (clusters: ICluster[], distance: DistanceFunction
       const currentObject = clusters[index].objects[i];
       const bi = countB(otherClusters, currentObject, distance);
       result[index][i] = (bi - ai) / (bi > ai ? bi : ai);
+      sum += result[index][i];
+      ++lenght;
     }
   })
-  return result;
+  return [result, (sum/lenght)];
 };
 
 export const countA = (clusters: ICluster[], distance: DistanceFunctionType, cluIndex: number, i: number): number => {
@@ -29,6 +33,9 @@ export const countA = (clusters: ICluster[], distance: DistanceFunctionType, clu
 
 export const countB = (centroids: ICluster[], object: IInstance, distance: DistanceFunctionType): number => {
   const avargeDistance = (objects: IInstance[]) => {
+    if (objects.length === 0) {
+      return 0;
+    }
     const sum = objects.reduce((total, dupa) => total + distance(dupa, object), 0);
     return sum / objects.length;
   };

@@ -15,12 +15,12 @@ export interface ICluster {
 }
 
 export interface IOptions {
-    distanceFunction: DistanceFunctionType;
-    numClusters: number;
-    standardScore: [number, number];
+    distanceFunction: DistanceFunctionType; // euclidean
+    numClusters: number; // dla najlepszego
+    standardScore: [number, number]; //
     random: 'RandomValues' | 'RandomInstances' | 'CountClusters';
     iterationLimit?: number;
-    removeOutlier: boolean;
+    removeOutlier: boolean; // false, remove only on countClusters
 }
 
 export interface IAnalitycsObjects {
@@ -45,5 +45,5 @@ export interface IOutputData {
 }
 
 export interface IInstanceWithID extends IInstance {
-    _id: number
+    __id: number
 }
