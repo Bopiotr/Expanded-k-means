@@ -60,3 +60,9 @@ export function saveCsvClusters(clusters: ICluster[], path: string, includeCentr
         }
     })
 }
+
+export const saveInFile = (content: string, path: string) => {
+    fs.writeFile(path, content, function (err) {
+        !err ? console.log('File saved') : console.log(err);
+    })
+}
