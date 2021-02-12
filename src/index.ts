@@ -21,25 +21,29 @@ import {Utils} from "./algorithm/utils";
 // console.log(silhouette);
 // saveCsvClusters(result.clusters, './res/pointsOut.csv');
 
-const absenteeismAtWork = 'absenteeism_at_work.csv';
+const absenteeismAtWork = 'small/absenteeism_at_work.csv';
 const iris = 'small/iris.csv';
+
+
 const frogs = 'Frogs_MFCCs.csv';
 const gt = 'big/gt_2012.csv';
-const live = 'fb_posts.csv';
+const live = 'big/fb_posts.csv';
+const htru = 'big/HTRU_2.csv';
 
 const main = (data: IImportedData): void => {
-    const options: IOptions = {
+    const start = new Date();
+    const algorithm = new Algorithm(data, {
         removeOutlier: false,
         numClusters: 4,
         distanceFunction: euclideanDistance(data.attributes),
-        random: 'CountClusters',
+        random: 'RandomInstances',
         standardScore: [1, 15]
-    };
-    const algorithm = new Algorithm(data, options);
+    } as IOptions);
     algorithm.buildClusters();
-    saveCsvClusters(algorithm.clusters, './out/' + iris, false);
+    console.log('Time: ' + (new Date().getTime() - start.getTime()) + ' ms');
+    saveCsvClusters(algorithm.clusters, './out/' + absenteeismAtWork, false);
     const [silhouette, avgSil] = countSilhouette(algorithm.clusters, algorithm.options.distanceFunction);
     console.log(avgSil);
 };
 
-readCsvData('./res/' + iris).then(main);
+readCsvData('./res/' + absenteeismAtWork).then(main);

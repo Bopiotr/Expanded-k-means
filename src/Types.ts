@@ -11,7 +11,7 @@ export interface IInstance {
 
 export interface ICluster {
     centroid: IInstance;
-    objects: IInstance[];
+    objects: (IInstanceWithID | IInstance)[];
 }
 
 export interface IOptions {

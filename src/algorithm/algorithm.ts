@@ -1,4 +1,4 @@
-import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects, IOutputData} from '../Types';
+import {IInstance, IImportedData, ICluster, IOptions, IAnalitycsObjects, IOutputData, IInstanceWithID} from '../Types';
 import {Random} from 'random-js';
 import {defaultDistance} from '../distanes/distancesFunctions';
 import {Utils} from "./utils";
@@ -16,6 +16,7 @@ export class Algorithm {
     public options: IOptions;
     public analityc: IAnalitycsObjects;
     public readonly data: IImportedData;
+    public readonly instancesWithId: IInstanceWithID[];
     public readonly instances: IInstance[];
 
     private iterations: number;
@@ -41,6 +42,7 @@ export class Algorithm {
             this.clusters = Utils.createClusters(this.instances, this.options.distanceFunction, this.options.numClusters);
             this.firstClusters = [...this.clusters];
         }
+        this.instancesWithId = this.instances.map((item, index) => ({...item, __id: index} as IInstanceWithID));
     }
 
     public get outputData(): IOutputData {
@@ -75,26 +77,23 @@ export class Algorithm {
         }
         let continueIterations = false;
         let iterator = 0;
+        this.assignObjectsToClusters();
         do {
-            this.assignObjectsToClusters();
             continueIterations = false;
             ++iterator;
+            const newCentroids: IInstance[] = [];
             this.clusters.forEach((currentCluster: ICluster, index: number) => {
                 let newMid: IInstance = {};
                 this.data.attributes.forEach(attr => {
                     const sum: number = currentCluster.objects.map(item => item[attr])
                         .reduce((total: number, aNumber: number) => total + aNumber, 0);
                     newMid[attr] = sum / currentCluster.objects.length;
-                    // idea: comparing by cluster objects
-                    if (!this.options.iterationLimit || iterator < this.options.iterationLimit) {
-                        continueIterations = continueIterations || (Math.abs(newMid[attr] - currentCluster.centroid[attr]) > 0.009);
-                    }
                 });
-                this.clusters[index] = {
-                    ...currentCluster,
-                    centroid: !currentCluster.objects.length ? this.clusters[index].centroid : newMid
-                } as ICluster;
+                newCentroids[index] = !currentCluster.objects.length ? this.clusters[index].centroid : newMid;
             });
+            const newClusters: ICluster[] = this.assignObjectsToClusters2(newCentroids);
+            continueIterations = this.continueIterations(this.clusters, newClusters);
+            this.clusters = newClusters;
             console.clear();
             console.log(iterator);
         } while (continueIterations);
@@ -120,22 +119,19 @@ export class Algorithm {
         const random = new Random();
         for (let i = 0; i < this.options.numClusters; ++i) {
             this.clusters.push({
-                centroid: {...this.instances[random.integer(0, this.instances.length)]},
+                centroid: {...this.instancesWithId[random.integer(0, this.instancesWithId.length)]},
                 objects: []
             } as ICluster);
         }
     }
 
     private assignObjectsToClusters(): void {
-        if (!this.options.distanceFunction) {
-            throw new Error('Distance function is undefined');
-        }
         const newClusters: ICluster[] = this.clusters.map(value => ({
             centroid: value.centroid,
             objects: []
         } as ICluster));
 
-        this.instances.forEach((currentInstance: IInstance) => {
+        this.instancesWithId.forEach((currentInstance: IInstanceWithID) => {
             let nearestCent = {
                 centroidIndex: 0,
                 distance: this.options.distanceFunction(currentInstance, this.clusters[0].centroid)
@@ -152,5 +148,42 @@ export class Algorithm {
             newClusters[nearestCent.centroidIndex].objects.push(currentInstance);
         });
         this.clusters = newClusters;
+    }
+
+    private assignObjectsToClusters2(centroids: IInstance[]): ICluster[] {
+        const newClusters: ICluster[] = centroids.map(value => ({
+            centroid: value,
+            objects: []
+        } as ICluster));
+
+        this.instancesWithId.forEach((currentInstance: IInstanceWithID) => {
+            let nearestCent = {
+                centroidIndex: 0,
+                distance: this.options.distanceFunction(currentInstance, this.clusters[0].centroid)
+            };
+            newClusters.forEach((currentCluster: ICluster, clusterIndex: number) => {
+                const distance: number = this.options.distanceFunction(currentInstance, currentCluster.centroid);
+                if (distance < nearestCent.distance) {
+                    nearestCent = {
+                        centroidIndex: clusterIndex,
+                        distance: distance
+                    };
+                }
+            });
+            newClusters[nearestCent.centroidIndex].objects.push(currentInstance);
+        });
+        return newClusters;
+    }
+
+    private continueIterations(oldClusters: ICluster[], newClusters: ICluster[]): boolean {
+        for(let i = 0; i < this.options.numClusters; ++i) {
+            const newObj = newClusters[i].objects.map(val => val.__id);
+            const oldObj = oldClusters[i].objects.map(val => val.__id);
+            if (newObj.length !== oldObj.length) return true;
+            for(let j = 0; j < newObj.length; ++j) {
+                if (!oldObj.includes(newObj[j])) return true;
+            }
+        }
+        return false;
     }
 }
